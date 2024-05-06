@@ -1,0 +1,54 @@
+﻿@page "/"
+@inject IJSRuntime JSRuntime
+@using System.Threading.Tasks
+
+<h3>Link Preview</h3>
+
+@if (previewData != null)
+{
+    <div class="preview-card">
+        <img src="@previewData.ImageUrl" alt="Preview Image" />
+        <div>
+            <h4>@previewData.Title</h4>
+            <p>@previewData.Description</p>
+            <a href="@previewData.Url" target="_blank">Visit Link</a>
+        </div>
+    </div>
+}
+
+<input type="text" @bind="url" />
+<button @onclick="GeneratePreview">Generate Preview</button>
+
+@code {
+    private string url;
+    private PreviewData previewData;
+
+    private async Task GeneratePreview()
+    {
+        // Call JavaScript function to fetch metadata
+        previewData = await JSRuntime.InvokeAsync<PreviewData>("openGraphScraper.fetchMetadata", url);
+    }
+
+    public class PreviewData
+    {
+        public string Title { get; set; }
+        public string Description { get; set; }
+        public string ImageUrl { get; set; }
+        public string Url { get; set; }
+    }
+
+}
+
+<script>
+    window.openGraphScraper = {
+        fetchMetadata: async function (url) {
+            try {
+                const response = await axios.get(`https://opengraph-scraper.vercel.app/api/scrape?url=${url}`);
+                return response.data;
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        }
+    };
+</script>
